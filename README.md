@@ -1,21 +1,33 @@
 # ShipLedger-Platform
 ShipLedger: Shipping & Trade Finance Platform
 1. Executive Summary
+   
 ShipLedger is a blockchain-powered digital shipping and trade finance platform that brings unprecedented transparency, collaboration, and efficiency to Global logistics and trade ecosystem. The platform enables stakeholders—shippers, freight forwarders, ports, financial service providers, and regulators—to collaborate securely in real-time, reducing friction, document loss, and transaction delays that hinder  trade flow. With this grant funding, ShipLedger aims to expand blockchain-driven shipping infrastructure across key trade corridors, modernize port operations, and enhance trade finance accessibility for every continent  SMEs.
-2. Problem Statement
+
+3. Problem Statement
+   
 The global maritime trade faces significant inefficiencies due to fragmented systems, paper-based documentation, and lack of transparency among trading parties. These issues lead to delays, financial losses, and corruption in customs and logistics operations. According to the African Development Bank, logistics inefficiencies add up to 40% to the cost of goods in some regions. ShipLedger addresses these pain points by introducing a decentralized, trusted, and automated system for handling trade data and shipping documents.
-3. The Solution
+
+5. The Solution
+   
 ShipLedger uses blockchain technology to digitalize and secure shipping transactions. Each shipment, document, and financial record is timestamped, encrypted, and accessible only to permissioned parties. The system provides full visibility and traceability across the supply chain. ShipLedger supports over 120 planned, estimated, and actual events per shipment, giving real-time insights and ensuring compliance with global trade standards.
+
 How ShipLedger Works
+
 i.	Digital Shipping Instructions – The shipper uploads instructions; the carrier drafts a Bill of Lading (BoL) for review.
+
 ii.	Smart Document Access – The verified BoL is instantly shared with authorized parties like customs, ports, and cargo owners.
+
 iii.	Permission-Based Control – Only approved users can view or edit data, with every action securely logged on the blockchain.
+
 iv.	Handling Changes – If routes or cargo details change, the carrier updates the BoL, and all parties are notified in real time.
+
 v.	Real-Time Tracking – Shipments are tracked by container or BoL number, covering 120+ events from origin to delivery.
+
 vi.	End-to-End Transparency – Everyone in the supply chain stays aligned, reducing delays, errors, and costs.
 
  
-4. Implementation Plan
+7. Implementation Plan
 - Phase 1 : Pilot implementation in key African ports (Lagos, Mombasa, Durban)
 - Phase 2 : Integrate trade finance modules with partner banks and logistics companies
 - Phase 3 : Expand user access to SMEs and freight forwarders across Africa
