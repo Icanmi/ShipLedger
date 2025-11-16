@@ -1,15 +1,30 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, json } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, json, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table - merged with Replit Auth requirements
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: text("role").notNull().default('shipper'),
   company: text("company"),
-  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const billsOfLading = pgTable("bills_of_lading", {
@@ -25,7 +40,7 @@ export const billsOfLading = pgTable("bills_of_lading", {
   placeOfReceipt: text("place_of_receipt"),
   placeOfDelivery: text("place_of_delivery"),
   cargoDescription: text("cargo_description").notNull(),
-  containerNumbers: text("container_numbers").array(),
+  containerNumbers: text("container_numbers"),
   grossWeight: text("gross_weight"),
   measurement: text("measurement"),
   numberOfPackages: integer("number_of_packages"),
@@ -65,23 +80,26 @@ export const tradeFinance = pgTable("trade_finance", {
 
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  transactionHash: text("transaction_hash").notNull().unique(),
+  transactionHash: text("transaction_hash").unique(),
   blockNumber: text("block_number"),
-  from: text("from").notNull(),
-  to: text("to").notNull(),
+  from: text("from"),
+  to: text("to"),
   gasUsed: text("gas_used"),
-  status: text("status").notNull(),
+  status: text("status"),
   type: text("type").notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  details: text("details"),
   relatedId: varchar("related_id"),
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBillOfLadingSchema = createInsertSchema(billsOfLading).omit({ id: true, createdAt: true });
 export const insertShipmentSchema = createInsertSchema(shipments).omit({ id: true, updatedAt: true });
 export const insertTradeFinanceSchema = createInsertSchema(tradeFinance).omit({ id: true, createdAt: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, timestamp: true });
 
+export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertBillOfLading = z.infer<typeof insertBillOfLadingSchema>;

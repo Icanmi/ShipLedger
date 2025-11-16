@@ -4,11 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Ship, Package, MapPin, Save, Send } from 'lucide-react';
+import { FileText, Ship, Package, MapPin, Save, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 export default function CreateBillOfLadingForm() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     blNumber: '',
     shipper: '',
@@ -31,14 +35,60 @@ export default function CreateBillOfLadingForm() {
     }));
   };
 
-  const handleSaveDraft = () => {
-    console.log('Saving draft:', formData);
-    toast({ description: 'Bill of Lading saved as draft' });
+  const createBolMutation = useMutation({
+    mutationFn: async (data: typeof formData & { status: string }) => {
+      const res = await apiRequest('POST', '/api/bills-of-lading', {
+        blNumber: data.blNumber,
+        shipper: data.shipper,
+        consignee: data.consignee,
+        notifyParty: data.notifyParty || null,
+        vesselName: data.vesselName,
+        voyageNumber: data.voyageNumber,
+        portOfLoading: data.portOfLoading,
+        portOfDischarge: data.portOfDischarge,
+        cargoDescription: data.cargoDescription,
+        containerNumbers: data.containerNumbers || null,
+        numberOfPackages: data.numberOfPackages ? parseInt(data.numberOfPackages) : null,
+        grossWeight: data.grossWeight || null,
+        status: data.status,
+      });
+      return await res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bills-of-lading'] });
+      toast({
+        title: 'Success',
+        description: `Bill of Lading ${data.blNumber} created successfully`,
+      });
+      setLocation('/documents');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create Bill of Lading',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleSaveDraft = (e: React.FormEvent) => {
+    e.preventDefault();
+    createBolMutation.mutate({ ...formData, status: 'draft' });
   };
 
-  const handleSubmitToBlockchain = () => {
-    console.log('Submitting to blockchain:', formData);
-    toast({ description: 'Submitting Bill of Lading to BlockDAG network...' });
+  const handleSubmitToBlockchain = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.blNumber || !formData.shipper || !formData.consignee || 
+        !formData.vesselName || !formData.voyageNumber || !formData.portOfLoading || 
+        !formData.portOfDischarge || !formData.cargoDescription) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+    createBolMutation.mutate({ ...formData, status: 'submitted' });
   };
 
   return (
@@ -231,9 +281,14 @@ export default function CreateBillOfLadingForm() {
               variant="outline" 
               className="gap-2"
               onClick={handleSaveDraft}
+              disabled={createBolMutation.isPending}
               data-testid="button-save-draft"
             >
-              <Save className="h-4 w-4" />
+              {createBolMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
               Save Draft
             </Button>
             <Button 
@@ -241,9 +296,14 @@ export default function CreateBillOfLadingForm() {
               variant="default" 
               className="gap-2"
               onClick={handleSubmitToBlockchain}
+              disabled={createBolMutation.isPending}
               data-testid="button-submit-blockchain"
             >
-              <Send className="h-4 w-4" />
+              {createBolMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               Submit to Blockchain
             </Button>
           </div>

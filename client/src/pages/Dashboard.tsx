@@ -6,9 +6,11 @@ import TradeFinancePanel from '@/components/TradeFinancePanel';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Filter, Package, Ship, FileCheck, Building2, Anchor, Truck, AlertCircle, CheckCircle } from 'lucide-react';
+import { PlusCircle, Filter, Package, Ship, FileCheck, Building2, Anchor, Truck, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
 import { mockBillsOfLading, mockShipmentEvents, mockTradeFinance } from '@/lib/mockData';
+import { useQuery } from '@tanstack/react-query';
+import type { BillOfLading } from '@shared/schema';
 
 interface DashboardProps {
   currentRole: string;
@@ -54,6 +56,12 @@ export default function Dashboard({ currentRole }: DashboardProps) {
   const roleInfo = getRoleInfo();
   const RoleIcon = roleInfo.icon;
 
+  // Fetch Bills of Lading from API
+  const { data: billsOfLading = [], isLoading: isLoadingBols } = useQuery<BillOfLading[]>({
+    queryKey: ['/api/bills-of-lading'],
+    enabled: currentRole === 'shipper',
+  });
+
   // Shipper-specific dashboard
   if (currentRole === 'shipper') {
     return (
@@ -87,24 +95,46 @@ export default function Dashboard({ currentRole }: DashboardProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockBillsOfLading.map((bol) => (
-            <BillOfLadingCard
-              key={bol.id}
-              blNumber={bol.blNumber}
-              shipper={bol.shipper}
-              consignee={bol.consignee}
-              vesselName={bol.vesselName}
-              portOfLoading={bol.portOfLoading}
-              portOfDischarge={bol.portOfDischarge}
-              status={bol.status}
-              blockchainStatus={bol.blockchainStatus}
-              blockchainHash={bol.blockchainHash}
-              cargoDescription={bol.cargoDescription}
-              onView={() => console.log('View details:', bol.blNumber)}
-            />
-          ))}
-        </div>
+        {isLoadingBols ? (
+          <div className="flex items-center justify-center p-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : billsOfLading.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center space-y-3">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-semibold">No Bills of Lading Yet</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">
+                Get started by creating your first Bill of Lading to begin tracking your shipments on the blockchain.
+              </p>
+              <Link href="/create">
+                <Button className="gap-2" data-testid="button-create-first">
+                  <PlusCircle className="h-4 w-4" />
+                  Create Your First B/L
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {billsOfLading.map((bol) => (
+              <BillOfLadingCard
+                key={bol.id}
+                blNumber={bol.blNumber}
+                shipper={bol.shipper}
+                consignee={bol.consignee}
+                vesselName={bol.vesselName}
+                portOfLoading={bol.portOfLoading}
+                portOfDischarge={bol.portOfDischarge}
+                status={bol.status}
+                blockchainStatus={bol.blockchainStatus || 'pending'}
+                blockchainHash={bol.blockchainHash || undefined}
+                cargoDescription={bol.cargoDescription}
+                onView={() => window.location.href = `/documents`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
