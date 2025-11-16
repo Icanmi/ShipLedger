@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin } from 'lucide-react';
 import { mockShipmentEvents } from '@/lib/mockData';
-import heroImage from '@assets/generated_images/Cargo_ship_illustration_ee9cca94.png';
 
 export default function Tracking() {
   return (
@@ -51,11 +50,9 @@ export default function Tracking() {
           </CardHeader>
           <CardContent>
             <div className="aspect-video bg-muted rounded-md overflow-hidden relative">
-              <img 
-                src={heroImage} 
-                alt="Cargo vessel" 
-                className="w-full h-full object-cover"
-              />
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <MapPin className="h-16 w-16 text-white/50" />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
                 <div className="text-white">
                   <p className="text-sm font-medium">Current Position</p>
