@@ -14,6 +14,7 @@ contract BillOfLading {
         address shipper;
         address consignee;
         address carrier;
+        address freightForwarder;
         string vesselName;
         string voyageNumber;
         string portOfLoading;
@@ -79,6 +80,19 @@ contract BillOfLading {
         uint256 timestamp
     );
     
+    event FreightForwarderAssigned(
+        string indexed blNumber,
+        address indexed freightForwarder,
+        uint256 timestamp
+    );
+    
+    event DocumentsSubmitted(
+        string indexed blNumber,
+        address indexed submitter,
+        string documentHash,
+        uint256 timestamp
+    );
+    
     // Modifiers
     modifier onlyShipper(string memory _blNumber) {
         require(
@@ -107,6 +121,14 @@ contract BillOfLading {
     
     modifier bolExists(string memory _blNumber) {
         require(billsOfLading[_blNumber].exists, "Bill of Lading does not exist");
+        _;
+    }
+    
+    modifier onlyFreightForwarder(string memory _blNumber) {
+        require(
+            billsOfLading[_blNumber].freightForwarder == msg.sender,
+            "Only assigned freight forwarder can perform this action"
+        );
         _;
     }
     
@@ -140,6 +162,7 @@ contract BillOfLading {
             shipper: msg.sender,
             consignee: _consignee,
             carrier: _carrier,
+            freightForwarder: address(0),
             vesselName: _vesselName,
             voyageNumber: _voyageNumber,
             portOfLoading: _portOfLoading,
@@ -344,5 +367,58 @@ contract BillOfLading {
     {
         return billsOfLading[_blNumber].exists && 
                billsOfLading[_blNumber].status != BLStatus.Draft;
+    }
+    
+    /**
+     * @dev Assign freight forwarder to Bill of Lading
+     * @param _blNumber Bill of Lading number
+     * @param _freightForwarder Address of freight forwarder
+     */
+    function assignFreightForwarder(string memory _blNumber, address _freightForwarder)
+        public
+        onlyShipper(_blNumber)
+        bolExists(_blNumber)
+    {
+        require(_freightForwarder != address(0), "Invalid freight forwarder address");
+        require(
+            billsOfLading[_blNumber].status == BLStatus.Draft ||
+            billsOfLading[_blNumber].status == BLStatus.Issued,
+            "Can only assign freight forwarder before shipment"
+        );
+        
+        billsOfLading[_blNumber].freightForwarder = _freightForwarder;
+        authorizedParties[_blNumber][_freightForwarder] = true;
+        
+        emit FreightForwarderAssigned(_blNumber, _freightForwarder, block.timestamp);
+        emit PartyAuthorized(_blNumber, _freightForwarder, block.timestamp);
+    }
+    
+    /**
+     * @dev Submit consolidated shipping documents
+     * @param _blNumber Bill of Lading number
+     * @param _documentHash Hash of consolidated documents
+     */
+    function submitDocuments(string memory _blNumber, string memory _documentHash)
+        public
+        onlyFreightForwarder(_blNumber)
+        bolExists(_blNumber)
+    {
+        require(bytes(_documentHash).length > 0, "Document hash cannot be empty");
+        
+        emit DocumentsSubmitted(_blNumber, msg.sender, _documentHash, block.timestamp);
+    }
+    
+    /**
+     * @dev Get freight forwarder for a Bill of Lading
+     * @param _blNumber Bill of Lading number
+     * @return address Freight forwarder address
+     */
+    function getFreightForwarder(string memory _blNumber)
+        public
+        view
+        bolExists(_blNumber)
+        returns (address)
+    {
+        return billsOfLading[_blNumber].freightForwarder;
     }
 }

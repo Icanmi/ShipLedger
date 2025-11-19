@@ -1,0 +1,99 @@
+You previously generated a critical gap report for ShipLedger.  
+Now your task is to FIX all missing stakeholders and workflows according to the deficiencies identified:
+
+==============================
+🚨 CRITICAL GAPS TO FIX
+==============================
+
+1. INSURANCE STAKEHOLDER (Completely Missing)
+- Add Insurance role to the smart contract authorization system.
+- Create Insurance.sol (or extend existing contract) including:
+  • Policy creation  
+  • Claim initiation  
+  • Claim validation  
+  • On-chain approval  
+  • Link insurance events to BillOfLading.sol  
+- Add backend models:
+  • InsurancePolicy  
+  • InsuranceClaim  
+- Add REST APIs:
+  • POST /insurance/policy  
+  • POST /insurance/claim  
+  • GET /insurance/policy/:id  
+  • GET /insurance/claim/:id  
+- Update UI:
+  • Add “Insurance” to StakeholderSelector  
+  • Policy dashboard  
+  • Claims dashboard  
+
+2. FREIGHT FORWARDER (Partially Implemented)
+- Add freight forwarder authorization in BillOfLading.sol
+- Add backend workflows:
+  • Shipment coordination  
+  • Document preparation  
+  • Handover logs  
+- Add APIs:
+  • POST /forwarder/coordinate  
+  • POST /forwarder/submit-documents  
+- Add UI pages:
+  • Freight Forwarder Coordination Panel  
+
+3. CUSTOMS & PORT AUTHORITY (Limited Functionality)
+Enhance these workflows:
+
+CUSTOMS:
+- Add clearance request/approval functions in smart contracts.
+- Add APIs:
+  • POST /customs/submit-declaration  
+  • POST /customs/approve-clearance  
+- Add UI:
+  • Customs Clearance Dashboard
+
+PORT AUTHORITY:
+- Add port arrival, berth allocation, and unloading events.
+- Add APIs:
+  • POST /port/allocate-berth  
+  • POST /port/confirm-unloading  
+- Add UI:
+  • Port Operations Panel
+
+==============================
+🎯 DELIVERABLES REQUIRED
+==============================
+
+1. Updated smart contract code (Solidity)
+- With new roles, modifiers, events, structs, workflows
+- Must remain compatible with the BlockDAG network
+
+2. Updated backend code
+- New models, controllers, and routes
+
+3. Updated UI components
+- StakeholderSelector now has 7 roles:
+  • Shipper
+  • Carrier
+  • Freight Forwarder
+  • Customs Authority
+  • Port Authority
+  • Trade Finance Bank
+  • Insurance
+
+4. Documentation updates
+- Update README.md sections for:
+  • Stakeholders  
+  • Smart contract architecture  
+  • API routes  
+  • Functional workflows  
+
+==============================
+🧠 EXECUTION REQUIREMENT
+==============================
+Implement these fixes in the MOST ORGANIZED way:
+
+FIRST update the smart contracts.  
+THEN update the backend.  
+THEN update the UI.  
+FINALLY update the documentation.
+
+Do NOT skip steps.
+Do NOT summarize — generate full working code and folder structure updates.

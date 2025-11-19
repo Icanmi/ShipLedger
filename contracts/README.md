@@ -6,8 +6,8 @@ ShipLedger's smart contracts provide a decentralized, immutable infrastructure f
 
 ## 📄 Contract Summary
 
-### BillOfLading.sol (349 lines)
-**Core Functionality**: Manages the complete lifecycle of digital Bills of Lading with cryptographic ownership transfer and status tracking.
+### BillOfLading.sol (428 lines)
+**Core Functionality**: Manages the complete lifecycle of digital Bills of Lading with cryptographic ownership transfer, freight forwarder assignment, and status tracking.
 
 **Key Functions**:
 - `createBillOfLading()` - Initialize new eBL with shipper, consignee, carrier, vessel, and cargo details
@@ -16,19 +16,21 @@ ShipLedger's smart contracts provide a decentralized, immutable infrastructure f
 - `transferOwnership()` - Transfer eBL ownership to new party with authorization trail
 - `surrenderBillOfLading()` - Final surrender upon cargo delivery
 - `authorizeParty()` - Grant access permissions to third parties
+- `assignFreightForwarder()` - Assign freight forwarder to coordinate shipment (shipper-only)
+- `submitDocuments()` - Freight forwarder submits consolidated documents (freight forwarder-only)
 - `getBillOfLading()` - Retrieve document details (authorized parties only)
 - `verifyBillOfLading()` - Cryptographic verification of document authenticity
 
-**Modifiers**: `onlyShipper`, `onlyOwner`, `onlyAuthorized`, `bolExists`
+**Modifiers**: `onlyShipper`, `onlyOwner`, `onlyAuthorized`, `onlyFreightForwarder`, `bolExists`
 
-**Events**: `BillOfLadingCreated`, `BillOfLadingIssued`, `StatusUpdated`, `OwnershipTransferred`, `PartyAuthorized`
+**Events**: `BillOfLadingCreated`, `BillOfLadingIssued`, `StatusUpdated`, `OwnershipTransferred`, `PartyAuthorized`, `FreightForwarderAssigned`, `DocumentsSubmitted`
 
 **Status Flow**: Draft → Issued → InTransit → AtPort → CustomsClearance → Delivered → Surrendered
 
 ---
 
-### ShipmentTracking.sol (345 lines)
-**Core Functionality**: Provides immutable, timestamped recording of cargo movements and shipment events with multi-party verification.
+### ShipmentTracking.sol (663 lines)
+**Core Functionality**: Provides immutable, timestamped recording of cargo movements, shipment events, customs clearances, and port operations with multi-party verification.
 
 **Key Functions**:
 - `createShipment()` - Initialize shipment tracking with BL reference and container details
@@ -36,12 +38,19 @@ ShipLedger's smart contracts provide a decentralized, immutable infrastructure f
 - `updateStatus()` - Update overall shipment status (unidirectional progression only)
 - `authorizeRecorder()` - Grant event recording permissions to ports, carriers, customs
 - `verifyEvent()` - Third-party verification of recorded events
+- `submitCustomsClearance()` - Submit customs declaration for approval
+- `approveCustomsClearance()` - Customs authority approves clearance request
+- `rejectCustomsClearance()` - Customs authority rejects clearance request
+- `recordPortOperation()` - Port authority records operations (arrival, unloading, departure)
+- `allocateBerth()` - Allocate berth to incoming vessel
+- `confirmArrival()` - Confirm vessel arrival at port
+- `confirmUnloading()` - Confirm cargo unloading completion
 - `getShipmentEvents()` - Retrieve complete event history for audit trail
 - `getLatestEvent()` - Query most recent shipment update
 
 **Modifiers**: `onlyShipper`, `onlyAuthorizedRecorder`, `shipmentExists`
 
-**Events**: `ShipmentCreated`, `EventRecorded`, `StatusUpdated`, `RecorderAuthorized`, `EventVerified`
+**Events**: `ShipmentCreated`, `EventRecorded`, `StatusUpdated`, `RecorderAuthorized`, `EventVerified`, `CustomsClearanceRequested`, `CustomsClearanceApproved`, `CustomsClearanceRejected`, `PortOperationRecorded`, `BerthAllocated`
 
 **Status Flow**: Created → Loaded → InTransit → AtPort → CustomsClearance → OutForDelivery → Delivered
 
@@ -65,6 +74,30 @@ ShipLedger's smart contracts provide a decentralized, immutable infrastructure f
 
 **Payment Flow**: Issued → DocumentsPresented → UnderReview → Accepted → Milestones Completed → Paid
 
+---
+
+### Insurance.sol (370 lines)
+**Core Functionality**: Manages cargo insurance policies and claims with automated verification and settlement processes.
+
+**Key Functions**:
+- `authorizeInsurer()` - Authorize insurance company to issue policies
+- `createPolicy()` - Create insurance policy for shipment with coverage amount, premium, dates
+- `activatePolicy()` - Activate policy when start date is reached
+- `submitClaim()` - Insured party submits claim for loss/damage
+- `reviewClaim()` - Move claim to under review status
+- `approveClaim()` - Insurance company approves claim for payment
+- `rejectClaim()` - Insurance company rejects claim with reason
+- `payClaim()` - Execute automated payment to claimant (approved claims only)
+- `cancelPolicy()` - Cancel policy if no approved/paid claims exist
+- `markPolicyExpired()` - Mark policy as expired after end date
+- `verifyPolicy()` - Verify policy is active and valid
+
+**Modifiers**: `onlyInsurer`, `onlyPolicyInsurer`, `policyMustExist`, `claimMustExist`
+
+**Events**: `PolicyCreated`, `PolicyStatusUpdated`, `ClaimSubmitted`, `ClaimStatusUpdated`, `ClaimPaid`, `InsurerAuthorized`
+
+**Coverage Flow**: Draft → Active → (Claim Submitted) → Under Review → Approved/Rejected → Paid (if approved)
+
 ## 🔑 Key Features
 
 - **Immutable Document Registry**: All Bills of Lading and shipment events permanently recorded on BlockDAG with cryptographic verification
@@ -82,12 +115,14 @@ ShipLedger's smart contracts provide a decentralized, immutable infrastructure f
 
 | Role | Permission Level | Contracts | Notes |
 |------|------------------|-----------|-------|
-| **Shipper** | Document Creator | BillOfLading, ShipmentTracking | Creates eBLs, initiates shipments, authorizes third parties |
+| **Shipper** | Document Creator | BillOfLading, ShipmentTracking | Creates eBLs, initiates shipments, authorizes third parties, assigns freight forwarders |
 | **Consignee** | Document Recipient | BillOfLading | Receives ownership upon transfer, can surrender eBL upon delivery |
 | **Carrier** | Event Recorder | ShipmentTracking, BillOfLading | Records loading/transit/delivery events, updates shipment status |
-| **Port Authority** | Event Validator | ShipmentTracking | Records port arrival/departure events, verifies container movements |
-| **Customs** | Regulatory Validator | ShipmentTracking | Verifies events, records customs clearance status |
+| **Freight Forwarder** | Coordination Agent | BillOfLading, ShipmentTracking | Assigned by shipper, submits consolidated documents, coordinates multimodal shipments |
+| **Port Authority** | Operations Manager | ShipmentTracking | Allocates berths, confirms vessel arrivals, records unloading events, manages terminal operations |
+| **Customs Authority** | Regulatory Approver | ShipmentTracking | Submits/approves/rejects clearance requests, verifies compliance, records clearance status |
 | **Bank (Issuer)** | L/C Administrator | TradeFinance | Issues Letters of Credit, accepts documents, releases milestone payments |
+| **Insurance Company** | Risk Coverage Provider | Insurance | Issues policies, processes claims, approves/rejects claims, automated settlements |
 | **Beneficiary (Seller)** | Payment Recipient | TradeFinance | Presents shipping documents, receives automated payments |
 | **Applicant (Buyer)** | L/C Requestor | TradeFinance | Referenced in L/C structure, receives refunds on cancellation |
 | **Current Owner** | Transfer Authority | BillOfLading | Can transfer eBL ownership, surrender document upon delivery |

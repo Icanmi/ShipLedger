@@ -7,6 +7,11 @@ import {
   insertShipmentSchema,
   insertTradeFinanceSchema,
   insertTransactionSchema,
+  insertInsurancePolicySchema,
+  insertInsuranceClaimSchema,
+  insertCustomsClearanceSchema,
+  insertPortOperationSchema,
+  insertFreightForwarderCoordinationSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -245,6 +250,354 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching transactions:", error);
       res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  app.post('/api/insurance/policies', isAuthenticated, requireRole('insurance'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validatedData = insertInsurancePolicySchema.parse({
+        ...req.body,
+        insurer: userId,
+      });
+
+      const policy = await storage.createInsurancePolicy(validatedData);
+
+      await storage.createTransaction({
+        type: 'insurance_policy_created',
+        userId,
+        details: `Created insurance policy ${policy.policyId}`,
+        relatedId: policy.id,
+      });
+
+      res.status(201).json(policy);
+    } catch (error: any) {
+      console.error("Error creating insurance policy:", error);
+      res.status(400).json({ message: error.message || "Failed to create insurance policy" });
+    }
+  });
+
+  app.get('/api/insurance/policies', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      const policies = user?.role === 'admin' || user?.role === 'insurance'
+        ? await storage.getInsurancePolicies()
+        : await storage.getInsurancePolicies(userId);
+      
+      res.json(policies);
+    } catch (error) {
+      console.error("Error fetching insurance policies:", error);
+      res.status(500).json({ message: "Failed to fetch insurance policies" });
+    }
+  });
+
+  app.get('/api/insurance/policies/:id', isAuthenticated, async (req, res) => {
+    try {
+      const policy = await storage.getInsurancePolicyById(req.params.id);
+      if (!policy) {
+        return res.status(404).json({ message: "Insurance policy not found" });
+      }
+      res.json(policy);
+    } catch (error) {
+      console.error("Error fetching insurance policy:", error);
+      res.status(500).json({ message: "Failed to fetch insurance policy" });
+    }
+  });
+
+  app.patch('/api/insurance/policies/:id/status', isAuthenticated, requireRole('insurance'), async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const updated = await storage.updateInsurancePolicyStatus(req.params.id, status);
+
+      if (!updated) {
+        return res.status(404).json({ message: "Insurance policy not found" });
+      }
+
+      await storage.createTransaction({
+        type: 'insurance_policy_updated',
+        userId,
+        details: `Updated insurance policy status to ${status}`,
+        relatedId: updated.id,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating insurance policy status:", error);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
+  app.post('/api/insurance/claims', isAuthenticated, requireRole('shipper', 'carrier', 'consignee'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validatedData = insertInsuranceClaimSchema.parse({
+        ...req.body,
+        claimant: userId,
+      });
+
+      const claim = await storage.createInsuranceClaim(validatedData);
+
+      await storage.createTransaction({
+        type: 'insurance_claim_submitted',
+        userId,
+        details: `Submitted insurance claim ${claim.claimId}`,
+        relatedId: claim.id,
+      });
+
+      res.status(201).json(claim);
+    } catch (error: any) {
+      console.error("Error creating insurance claim:", error);
+      res.status(400).json({ message: error.message || "Failed to create insurance claim" });
+    }
+  });
+
+  app.get('/api/insurance/claims', isAuthenticated, async (req: any, res) => {
+    try {
+      const policyId = req.query.policyId as string | undefined;
+      const claims = await storage.getInsuranceClaims(policyId);
+      res.json(claims);
+    } catch (error) {
+      console.error("Error fetching insurance claims:", error);
+      res.status(500).json({ message: "Failed to fetch insurance claims" });
+    }
+  });
+
+  app.patch('/api/insurance/claims/:id/status', isAuthenticated, requireRole('insurance'), async (req: any, res) => {
+    try {
+      const { status, resolutionNotes } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const updated = await storage.updateInsuranceClaimStatus(
+        req.params.id,
+        status,
+        userId,
+        resolutionNotes
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Insurance claim not found" });
+      }
+
+      await storage.createTransaction({
+        type: 'insurance_claim_updated',
+        userId,
+        details: `Updated insurance claim status to ${status}`,
+        relatedId: updated.id,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating insurance claim status:", error);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
+  app.post('/api/customs/clearances', isAuthenticated, requireRole('shipper', 'freight_forwarder'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validatedData = insertCustomsClearanceSchema.parse(req.body);
+
+      const clearance = await storage.createCustomsClearance(validatedData);
+
+      await storage.createTransaction({
+        type: 'customs_clearance_requested',
+        userId,
+        details: `Submitted customs clearance ${clearance.clearanceId}`,
+        relatedId: clearance.id,
+      });
+
+      res.status(201).json(clearance);
+    } catch (error: any) {
+      console.error("Error creating customs clearance:", error);
+      res.status(400).json({ message: error.message || "Failed to create customs clearance" });
+    }
+  });
+
+  app.get('/api/customs/clearances', isAuthenticated, async (req: any, res) => {
+    try {
+      const shipmentId = req.query.shipmentId as string | undefined;
+      const clearances = await storage.getCustomsClearances(shipmentId);
+      res.json(clearances);
+    } catch (error) {
+      console.error("Error fetching customs clearances:", error);
+      res.status(500).json({ message: "Failed to fetch customs clearances" });
+    }
+  });
+
+  app.patch('/api/customs/clearances/:id/approve', isAuthenticated, requireRole('customs'), async (req: any, res) => {
+    try {
+      const { notes } = req.body;
+      const userId = req.user.claims.sub;
+
+      const updated = await storage.updateCustomsClearanceStatus(
+        req.params.id,
+        'approved',
+        notes,
+        userId
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Customs clearance not found" });
+      }
+
+      await storage.createTransaction({
+        type: 'customs_clearance_approved',
+        userId,
+        details: `Approved customs clearance ${updated.clearanceId}`,
+        relatedId: updated.id,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error approving customs clearance:", error);
+      res.status(500).json({ message: "Failed to approve clearance" });
+    }
+  });
+
+  app.patch('/api/customs/clearances/:id/reject', isAuthenticated, requireRole('customs'), async (req: any, res) => {
+    try {
+      const { notes } = req.body;
+      const userId = req.user.claims.sub;
+
+      const updated = await storage.updateCustomsClearanceStatus(
+        req.params.id,
+        'rejected',
+        notes,
+        userId
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Customs clearance not found" });
+      }
+
+      await storage.createTransaction({
+        type: 'customs_clearance_rejected',
+        userId,
+        details: `Rejected customs clearance ${updated.clearanceId}`,
+        relatedId: updated.id,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error rejecting customs clearance:", error);
+      res.status(500).json({ message: "Failed to reject clearance" });
+    }
+  });
+
+  app.post('/api/port/operations', isAuthenticated, requireRole('port_authority'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validatedData = insertPortOperationSchema.parse({
+        ...req.body,
+        portAuthority: userId,
+      });
+
+      const operation = await storage.createPortOperation(validatedData);
+
+      await storage.createTransaction({
+        type: 'port_operation_recorded',
+        userId,
+        details: `Recorded port operation ${operation.operationType}`,
+        relatedId: operation.id,
+      });
+
+      res.status(201).json(operation);
+    } catch (error: any) {
+      console.error("Error creating port operation:", error);
+      res.status(400).json({ message: error.message || "Failed to create port operation" });
+    }
+  });
+
+  app.get('/api/port/operations', isAuthenticated, async (req: any, res) => {
+    try {
+      const shipmentId = req.query.shipmentId as string | undefined;
+      const operations = await storage.getPortOperations(shipmentId);
+      res.json(operations);
+    } catch (error) {
+      console.error("Error fetching port operations:", error);
+      res.status(500).json({ message: "Failed to fetch port operations" });
+    }
+  });
+
+  app.post('/api/freight-forwarder/coordination', isAuthenticated, requireRole('freight_forwarder'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validatedData = insertFreightForwarderCoordinationSchema.parse({
+        ...req.body,
+        freightForwarder: userId,
+      });
+
+      const coordination = await storage.createFreightForwarderCoordination(validatedData);
+
+      await storage.createTransaction({
+        type: 'freight_forwarder_coordination_created',
+        userId,
+        details: `Created freight forwarder coordination ${coordination.coordinationId}`,
+        relatedId: coordination.id,
+      });
+
+      res.status(201).json(coordination);
+    } catch (error: any) {
+      console.error("Error creating freight forwarder coordination:", error);
+      res.status(400).json({ message: error.message || "Failed to create coordination" });
+    }
+  });
+
+  app.get('/api/freight-forwarder/coordination', isAuthenticated, async (req: any, res) => {
+    try {
+      const blId = req.query.blId as string | undefined;
+      const userId = req.query.userId as string | undefined;
+      const coordinations = await storage.getFreightForwarderCoordinations(blId, userId);
+      res.json(coordinations);
+    } catch (error) {
+      console.error("Error fetching freight forwarder coordinations:", error);
+      res.status(500).json({ message: "Failed to fetch coordinations" });
+    }
+  });
+
+  app.patch('/api/freight-forwarder/coordination/:id/status', isAuthenticated, requireRole('freight_forwarder'), async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const updated = await storage.updateFreightForwarderCoordinationStatus(req.params.id, status);
+
+      if (!updated) {
+        return res.status(404).json({ message: "Coordination not found" });
+      }
+
+      await storage.createTransaction({
+        type: 'freight_forwarder_coordination_updated',
+        userId,
+        details: `Updated coordination status to ${status}`,
+        relatedId: updated.id,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating freight forwarder coordination status:", error);
+      res.status(500).json({ message: "Failed to update status" });
     }
   });
 

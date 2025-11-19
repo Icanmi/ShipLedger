@@ -1,4 +1,4 @@
-import { Building2, Package, Ship, Truck, FileCheck, Anchor } from 'lucide-react';
+import { Building2, Package, Ship, Truck, FileCheck, Anchor, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ const roles = [
   { value: 'customs', label: 'Customs Authority', icon: FileCheck },
   { value: 'bank', label: 'Trade Finance Bank', icon: Building2 },
   { value: 'port_authority', label: 'Port Authority', icon: Anchor },
+  { value: 'insurance', label: 'Insurance Company', icon: Shield },
 ];
 
 interface StakeholderSelectorProps {

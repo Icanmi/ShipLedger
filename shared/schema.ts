@@ -93,11 +93,94 @@ export const transactions = pgTable("transactions", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const insurancePolicies = pgTable("insurance_policies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  policyId: text("policy_id").notNull().unique(),
+  blId: varchar("bl_id").references(() => billsOfLading.id),
+  insurer: varchar("insurer").references(() => users.id),
+  insured: varchar("insured").references(() => users.id),
+  coverageAmount: text("coverage_amount").notNull(),
+  premium: text("premium").notNull(),
+  coverageType: text("coverage_type").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").notNull().default('draft'),
+  smartContractAddress: text("smart_contract_address"),
+  blockchainHash: text("blockchain_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insuranceClaims = pgTable("insurance_claims", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  claimId: text("claim_id").notNull().unique(),
+  policyId: varchar("policy_id").references(() => insurancePolicies.id),
+  blId: varchar("bl_id").references(() => billsOfLading.id),
+  claimant: varchar("claimant").references(() => users.id),
+  claimAmount: text("claim_amount").notNull(),
+  incidentType: text("incident_type").notNull(),
+  description: text("description").notNull(),
+  supportingDocuments: json("supporting_documents"),
+  status: text("status").notNull().default('submitted'),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  processedBy: varchar("processed_by").references(() => users.id),
+  resolutionNotes: text("resolution_notes"),
+  blockchainHash: text("blockchain_hash"),
+});
+
+export const customsClearances = pgTable("customs_clearances", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clearanceId: text("clearance_id").notNull().unique(),
+  shipmentId: varchar("shipment_id").references(() => shipments.id),
+  blId: varchar("bl_id").references(() => billsOfLading.id),
+  customsAuthority: varchar("customs_authority").references(() => users.id),
+  declarationType: text("declaration_type").notNull(),
+  documentHash: text("document_hash"),
+  requestedAt: timestamp("requested_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  status: text("status").notNull().default('submitted'),
+  notes: text("notes"),
+  blockchainHash: text("blockchain_hash"),
+});
+
+export const portOperations = pgTable("port_operations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  operationId: text("operation_id").notNull().unique(),
+  shipmentId: varchar("shipment_id").references(() => shipments.id),
+  blId: varchar("bl_id").references(() => billsOfLading.id),
+  portAuthority: varchar("port_authority").references(() => users.id),
+  operationType: text("operation_type").notNull(),
+  berthNumber: text("berth_number"),
+  status: text("status").notNull(),
+  notes: text("notes"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  blockchainHash: text("blockchain_hash"),
+});
+
+export const freightForwarderCoordination = pgTable("freight_forwarder_coordination", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  coordinationId: text("coordination_id").notNull().unique(),
+  blId: varchar("bl_id").references(() => billsOfLading.id),
+  freightForwarder: varchar("freight_forwarder").references(() => users.id),
+  shipper: varchar("shipper").references(() => users.id),
+  status: text("status").notNull().default('pending'),
+  services: json("services"),
+  documentHash: text("document_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  blockchainHash: text("blockchain_hash"),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBillOfLadingSchema = createInsertSchema(billsOfLading).omit({ id: true, createdAt: true });
 export const insertShipmentSchema = createInsertSchema(shipments).omit({ id: true, updatedAt: true });
 export const insertTradeFinanceSchema = createInsertSchema(tradeFinance).omit({ id: true, createdAt: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, timestamp: true });
+export const insertInsurancePolicySchema = createInsertSchema(insurancePolicies).omit({ id: true, createdAt: true });
+export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).omit({ id: true, submittedAt: true });
+export const insertCustomsClearanceSchema = createInsertSchema(customsClearances).omit({ id: true, requestedAt: true });
+export const insertPortOperationSchema = createInsertSchema(portOperations).omit({ id: true, timestamp: true });
+export const insertFreightForwarderCoordinationSchema = createInsertSchema(freightForwarderCoordination).omit({ id: true, createdAt: true, updatedAt: true });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -110,3 +193,13 @@ export type InsertTradeFinance = z.infer<typeof insertTradeFinanceSchema>;
 export type TradeFinance = typeof tradeFinance.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+export type InsertInsurancePolicy = z.infer<typeof insertInsurancePolicySchema>;
+export type InsurancePolicy = typeof insurancePolicies.$inferSelect;
+export type InsertInsuranceClaim = z.infer<typeof insertInsuranceClaimSchema>;
+export type InsuranceClaim = typeof insuranceClaims.$inferSelect;
+export type InsertCustomsClearance = z.infer<typeof insertCustomsClearanceSchema>;
+export type CustomsClearance = typeof customsClearances.$inferSelect;
+export type InsertPortOperation = z.infer<typeof insertPortOperationSchema>;
+export type PortOperation = typeof portOperations.$inferSelect;
+export type InsertFreightForwarderCoordination = z.infer<typeof insertFreightForwarderCoordinationSchema>;
+export type FreightForwarderCoordination = typeof freightForwarderCoordination.$inferSelect;
