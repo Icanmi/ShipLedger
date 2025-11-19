@@ -1,0 +1,76 @@
+You are auditing the ShipLedger project. Your task is to verify whether the system architecture, features, smart contracts, backend logic, and documentation fully capture all essential stakeholders and key logistics processes required for international cargo movement.
+
+### 1. Stakeholder Verification
+Check if the project includes clear logic, data models, APIs, or workflow references for ALL required shipping stakeholders:
+
+- Insurance
+- Shipper
+- Carriers
+- Freight Forwarder
+- Customs Authority
+- Port Authority
+- Trade Finance Bank
+
+For each stakeholder:
+- Confirm if they appear in the codebase or documentation.
+- Identify missing roles, interactions, or permissions.
+- Suggest where they should be added (backend routes, contract events, UI screens, or database models).
+
+### 2. Key Process & Document Verification
+Confirm whether the following key processes are properly represented:
+
+- Bills of Lading (creation, ownership transfer, verification)
+- Shipment Tracking (location updates, status changes, milestones)
+- Trade Finance (document validation, financial triggers, bank approvals)
+- Blockchain Transactions (on-chain events, signatures, audit trail)
+
+For each process:
+- Confirm presence in the current code.
+- Check if workflows are complete or partial.
+- Highlight missing components and recommend fixes.
+
+### 3. Structural Assessment
+Check if the project structure includes:
+- Data models for each stakeholder
+- API endpoints for logistics workflows
+- Smart contract functions related to shipping processes
+- Database tables for shipment lifecycle
+- Frontend screens for key user interactions
+
+### 4. Output Format
+Return your analysis in this JSON format:
+
+{
+  "stakeholders": {
+    "insurance": "present/missing + notes",
+    "shipper": "present/missing + notes",
+    "carriers": "present/missing + notes",
+    "freight_forwarder": "present/missing + notes",
+    "customs_authority": "present/missing + notes",
+    "port_authority": "present/missing + notes",
+    "trade_finance_bank": "present/missing + notes"
+  },
+  "key_processes": {
+    "bills_of_lading": "status + missing parts + recommendations",
+    "shipment_tracking": "status + missing parts + recommendations",
+    "trade_finance": "status + missing parts + recommendations",
+    "blockchain_transactions": "status + missing parts + recommendations"
+  },
+  "gaps_identified": [
+    "List missing stakeholders or processes",
+    "List missing features or contract functions",
+    "List any architectural weaknesses"
+  ],
+  "recommendations": [
+    "Action steps to improve coverage",
+    "What to add to backend",
+    "What to add to frontend",
+    "What to update in documentation",
+    "Contract functions needed"
+  ]
+}
+
+### 5. Execution Requirement
+Perform a thorough scan of the entire project (contracts, backend, frontend, docs) before generating output. Your goal is to confirm completeness and highlight missing modules.
+
+Now run the audit and produce the JSON report.
