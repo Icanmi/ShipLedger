@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, PlusCircle, FileText } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Truck, PlusCircle, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
 import type { FreightForwarderCoordination } from '@shared/schema';
 import BlockchainStatus from '@/components/BlockchainStatus';
 
 export default function ForwarderDashboard() {
-  const { data: coordinations = [], isLoading } = useQuery<FreightForwarderCoordination[]>({
+  const { data: coordinations = [], isLoading, error } = useQuery<FreightForwarderCoordination[]>({
     queryKey: ['/api/freight-forwarder/coordination'],
   });
 
@@ -21,6 +22,31 @@ export default function ForwarderDashboard() {
     const coordDate = new Date(c.createdAt).setHours(0, 0, 0, 0);
     return today === coordDate;
   });
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Freight Forwarder Dashboard</h1>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load coordinations. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Freight Forwarder Dashboard</h1>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Anchor, Ship, PlusCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Anchor, Ship, PlusCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
 import type { PortOperation } from '@shared/schema';
 import BlockchainStatus from '@/components/BlockchainStatus';
 
 export default function PortDashboard() {
-  const { data: operations = [], isLoading } = useQuery<PortOperation[]>({
+  const { data: operations = [], isLoading, error } = useQuery<PortOperation[]>({
     queryKey: ['/api/port/operations'],
   });
 
@@ -21,6 +22,31 @@ export default function PortDashboard() {
     const opDate = new Date(op.timestamp).setHours(0, 0, 0, 0);
     return today === opDate;
   });
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Port Authority Dashboard</h1>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load port operations. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Port Authority Dashboard</h1>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

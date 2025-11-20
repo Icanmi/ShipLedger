@@ -4,6 +4,38 @@
 
 ShipLedger is a blockchain-powered digital shipping and trade finance platform built on the BlockDAG network. The system digitizes Bills of Lading (eBLs), automates trade finance workflows through smart contracts, and provides immutable cargo tracking across the global maritime supply chain. The platform eliminates paper-based inefficiencies in shipping documentation by creating a transparent, multi-stakeholder ecosystem where shippers, carriers, customs authorities, port operators, and financial institutions can collaborate on verified blockchain records.
 
+## Recent Changes (November 20, 2025)
+
+### Role-Specific Dashboard Implementation - Completed
+Successfully implemented complete role-specific dashboards for all four remaining stakeholders:
+
+1. **Insurance Company Dashboard** (`/insurance`)
+   - Created InsuranceDashboard with overview of policies and claims
+   - Created CreatePolicy form for new insurance policy creation
+   - Created ClaimsManagement page with claim initiation and approval workflows
+   - All connected to existing backend routes with proper API integration
+
+2. **Customs Authority Dashboard** (`/customs`)
+   - Created CustomsDashboard with clearance request metrics and status overview
+   - Created ClearanceReview page for approve/reject clearance workflows
+   - Integrated with customs clearances API endpoints
+
+3. **Port Authority Dashboard** (`/port`)
+   - Created PortDashboard with berth allocations and vessel tracking
+   - Created CreateOperation form for recording port operations
+   - Supports vessel arrivals, berth allocations, and terminal updates
+
+4. **Freight Forwarder Dashboard** (`/forwarder`)
+   - Created ForwarderDashboard with coordination overview
+   - Created CreateCoordination form for new freight forwarding coordination
+   - Integrated with freight forwarder coordination API endpoints
+
+5. **Routing Updates**
+   - Updated App.tsx with all role-specific routes
+   - All pages properly integrated with existing authentication and navigation
+
+All dashboards follow the IBM Carbon Design System aesthetic with consistent styling, proper error handling, loading states, and responsive TailwindCSS layouts. All LSP errors resolved and application tested successfully.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

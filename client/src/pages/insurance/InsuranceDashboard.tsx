@@ -2,23 +2,52 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, FileText, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PlusCircle, FileText, AlertCircle, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
 import type { InsurancePolicy, InsuranceClaim } from '@shared/schema';
 import BlockchainStatus from '@/components/BlockchainStatus';
 
 export default function InsuranceDashboard() {
-  const { data: policies = [], isLoading: policiesLoading } = useQuery<InsurancePolicy[]>({
+  const { data: policies = [], isLoading: policiesLoading, error: policiesError } = useQuery<InsurancePolicy[]>({
     queryKey: ['/api/insurance/policies'],
   });
 
-  const { data: claims = [], isLoading: claimsLoading } = useQuery<InsuranceClaim[]>({
+  const { data: claims = [], isLoading: claimsLoading, error: claimsError } = useQuery<InsuranceClaim[]>({
     queryKey: ['/api/insurance/claims'],
   });
+
+  const isLoading = policiesLoading || claimsLoading;
+  const hasError = policiesError || claimsError;
 
   const activePolicies = policies.filter(p => p.status === 'active');
   const pendingClaims = claims.filter(c => c.status === 'submitted');
   const approvedClaims = claims.filter(c => c.status === 'approved');
+
+  if (hasError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Insurance Dashboard</h1>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load dashboard data. {policiesError ? 'Error loading policies. ' : ''}{claimsError ? 'Error loading claims.' : ''}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Insurance Dashboard</h1>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
