@@ -29,6 +29,23 @@ import Transactions from "@/pages/Transactions";
 import CreateDocument from "@/pages/CreateDocument";
 import NotFound from "@/pages/not-found";
 
+// Insurance pages
+import InsuranceDashboard from "@/pages/insurance/InsuranceDashboard";
+import CreatePolicy from "@/pages/insurance/CreatePolicy";
+import ClaimsManagement from "@/pages/insurance/ClaimsManagement";
+
+// Customs pages
+import CustomsDashboard from "@/pages/customs/CustomsDashboard";
+import ClearanceReview from "@/pages/customs/ClearanceReview";
+
+// Port Authority pages
+import PortDashboard from "@/pages/port/PortDashboard";
+import CreateOperation from "@/pages/port/CreateOperation";
+
+// Freight Forwarder pages
+import ForwarderDashboard from "@/pages/forwarder/ForwarderDashboard";
+import CreateCoordination from "@/pages/forwarder/CreateCoordination";
+
 function Router({ currentRole }: { currentRole: string }) {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -51,6 +68,24 @@ function Router({ currentRole }: { currentRole: string }) {
       <Route path="/finance" component={Finance} />
       <Route path="/transactions" component={Transactions} />
       <Route path="/create" component={CreateDocument} />
+      
+      {/* Insurance routes */}
+      <Route path="/insurance" component={InsuranceDashboard} />
+      <Route path="/insurance/policies/new" component={CreatePolicy} />
+      <Route path="/insurance/claims" component={ClaimsManagement} />
+      
+      {/* Customs routes */}
+      <Route path="/customs" component={CustomsDashboard} />
+      <Route path="/customs/clearances" component={ClearanceReview} />
+      
+      {/* Port Authority routes */}
+      <Route path="/port" component={PortDashboard} />
+      <Route path="/port/operations/new" component={CreateOperation} />
+      
+      {/* Freight Forwarder routes */}
+      <Route path="/forwarder" component={ForwarderDashboard} />
+      <Route path="/forwarder/coordination/new" component={CreateCoordination} />
+      
       <Route component={NotFound} />
     </Switch>
   );
